@@ -1,0 +1,488 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "! pip install langchain-community langchain_huggingface pypdf chromadb"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "by93Tsl3CB5F",
+        "outputId": "9acebed4-dda5-455c-ca46-4e83b2e7bc32"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: langchain-community in /usr/local/lib/python3.11/dist-packages (0.3.27)\n",
+            "Requirement already satisfied: langchain_huggingface in /usr/local/lib/python3.11/dist-packages (0.3.1)\n",
+            "Requirement already satisfied: pypdf in /usr/local/lib/python3.11/dist-packages (5.9.0)\n",
+            "Requirement already satisfied: chromadb in /usr/local/lib/python3.11/dist-packages (1.0.15)\n",
+            "Requirement already satisfied: langchain-core<1.0.0,>=0.3.66 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (0.3.72)\n",
+            "Requirement already satisfied: langchain<1.0.0,>=0.3.26 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (0.3.27)\n",
+            "Requirement already satisfied: SQLAlchemy<3,>=1.4 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (2.0.42)\n",
+            "Requirement already satisfied: requests<3,>=2 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (2.32.3)\n",
+            "Requirement already satisfied: PyYAML>=5.3 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (6.0.2)\n",
+            "Requirement already satisfied: aiohttp<4.0.0,>=3.8.3 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (3.12.15)\n",
+            "Requirement already satisfied: tenacity!=8.4.0,<10,>=8.1.0 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (8.5.0)\n",
+            "Requirement already satisfied: dataclasses-json<0.7,>=0.5.7 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (0.6.7)\n",
+            "Requirement already satisfied: pydantic-settings<3.0.0,>=2.4.0 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (2.10.1)\n",
+            "Requirement already satisfied: langsmith>=0.1.125 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (0.4.10)\n",
+            "Requirement already satisfied: httpx-sse<1.0.0,>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (0.4.1)\n",
+            "Requirement already satisfied: numpy>=1.26.2 in /usr/local/lib/python3.11/dist-packages (from langchain-community) (2.0.2)\n",
+            "Requirement already satisfied: tokenizers>=0.19.1 in /usr/local/lib/python3.11/dist-packages (from langchain_huggingface) (0.21.4)\n",
+            "Requirement already satisfied: huggingface-hub>=0.33.4 in /usr/local/lib/python3.11/dist-packages (from langchain_huggingface) (0.34.3)\n",
+            "Requirement already satisfied: build>=1.0.3 in /usr/local/lib/python3.11/dist-packages (from chromadb) (1.3.0)\n",
+            "Requirement already satisfied: pydantic>=1.9 in /usr/local/lib/python3.11/dist-packages (from chromadb) (2.11.7)\n",
+            "Requirement already satisfied: pybase64>=1.4.1 in /usr/local/lib/python3.11/dist-packages (from chromadb) (1.4.2)\n",
+            "Requirement already satisfied: uvicorn>=0.18.3 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb) (0.35.0)\n",
+            "Requirement already satisfied: posthog<6.0.0,>=2.4.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (5.4.0)\n",
+            "Requirement already satisfied: typing-extensions>=4.5.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (4.14.1)\n",
+            "Requirement already satisfied: onnxruntime>=1.14.1 in /usr/local/lib/python3.11/dist-packages (from chromadb) (1.22.1)\n",
+            "Requirement already satisfied: opentelemetry-api>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (1.36.0)\n",
+            "Requirement already satisfied: opentelemetry-exporter-otlp-proto-grpc>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (1.36.0)\n",
+            "Requirement already satisfied: opentelemetry-sdk>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (1.36.0)\n",
+            "Requirement already satisfied: pypika>=0.48.9 in /usr/local/lib/python3.11/dist-packages (from chromadb) (0.48.9)\n",
+            "Requirement already satisfied: tqdm>=4.65.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (4.67.1)\n",
+            "Requirement already satisfied: overrides>=7.3.1 in /usr/local/lib/python3.11/dist-packages (from chromadb) (7.7.0)\n",
+            "Requirement already satisfied: importlib-resources in /usr/local/lib/python3.11/dist-packages (from chromadb) (6.5.2)\n",
+            "Requirement already satisfied: grpcio>=1.58.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (1.74.0)\n",
+            "Requirement already satisfied: bcrypt>=4.0.1 in /usr/local/lib/python3.11/dist-packages (from chromadb) (4.3.0)\n",
+            "Requirement already satisfied: typer>=0.9.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (0.16.0)\n",
+            "Requirement already satisfied: kubernetes>=28.1.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (33.1.0)\n",
+            "Requirement already satisfied: mmh3>=4.0.1 in /usr/local/lib/python3.11/dist-packages (from chromadb) (5.2.0)\n",
+            "Requirement already satisfied: orjson>=3.9.12 in /usr/local/lib/python3.11/dist-packages (from chromadb) (3.11.1)\n",
+            "Requirement already satisfied: httpx>=0.27.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (0.28.1)\n",
+            "Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (13.9.4)\n",
+            "Requirement already satisfied: jsonschema>=4.19.0 in /usr/local/lib/python3.11/dist-packages (from chromadb) (4.25.0)\n",
+            "Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain-community) (2.6.1)\n",
+            "Requirement already satisfied: aiosignal>=1.4.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain-community) (1.4.0)\n",
+            "Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain-community) (25.3.0)\n",
+            "Requirement already satisfied: frozenlist>=1.1.1 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain-community) (1.7.0)\n",
+            "Requirement already satisfied: multidict<7.0,>=4.5 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain-community) (6.6.3)\n",
+            "Requirement already satisfied: propcache>=0.2.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain-community) (0.3.2)\n",
+            "Requirement already satisfied: yarl<2.0,>=1.17.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain-community) (1.20.1)\n",
+            "Requirement already satisfied: packaging>=19.1 in /usr/local/lib/python3.11/dist-packages (from build>=1.0.3->chromadb) (25.0)\n",
+            "Requirement already satisfied: pyproject_hooks in /usr/local/lib/python3.11/dist-packages (from build>=1.0.3->chromadb) (1.2.0)\n",
+            "Requirement already satisfied: marshmallow<4.0.0,>=3.18.0 in /usr/local/lib/python3.11/dist-packages (from dataclasses-json<0.7,>=0.5.7->langchain-community) (3.26.1)\n",
+            "Requirement already satisfied: typing-inspect<1,>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from dataclasses-json<0.7,>=0.5.7->langchain-community) (0.9.0)\n",
+            "Requirement already satisfied: anyio in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb) (4.10.0)\n",
+            "Requirement already satisfied: certifi in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb) (2025.8.3)\n",
+            "Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb) (1.0.9)\n",
+            "Requirement already satisfied: idna in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb) (3.10)\n",
+            "Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.11/dist-packages (from httpcore==1.*->httpx>=0.27.0->chromadb) (0.16.0)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.11/dist-packages (from huggingface-hub>=0.33.4->langchain_huggingface) (3.18.0)\n",
+            "Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub>=0.33.4->langchain_huggingface) (2025.3.0)\n",
+            "Requirement already satisfied: hf-xet<2.0.0,>=1.1.3 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub>=0.33.4->langchain_huggingface) (1.1.5)\n",
+            "Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /usr/local/lib/python3.11/dist-packages (from jsonschema>=4.19.0->chromadb) (2025.4.1)\n",
+            "Requirement already satisfied: referencing>=0.28.4 in /usr/local/lib/python3.11/dist-packages (from jsonschema>=4.19.0->chromadb) (0.36.2)\n",
+            "Requirement already satisfied: rpds-py>=0.7.1 in /usr/local/lib/python3.11/dist-packages (from jsonschema>=4.19.0->chromadb) (0.26.0)\n",
+            "Requirement already satisfied: six>=1.9.0 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (1.17.0)\n",
+            "Requirement already satisfied: python-dateutil>=2.5.3 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (2.9.0.post0)\n",
+            "Requirement already satisfied: google-auth>=1.0.1 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (2.38.0)\n",
+            "Requirement already satisfied: websocket-client!=0.40.0,!=0.41.*,!=0.42.*,>=0.32.0 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (1.8.0)\n",
+            "Requirement already satisfied: requests-oauthlib in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (2.0.0)\n",
+            "Requirement already satisfied: oauthlib>=3.2.2 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (3.3.1)\n",
+            "Requirement already satisfied: urllib3>=1.24.2 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (2.5.0)\n",
+            "Requirement already satisfied: durationpy>=0.7 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb) (0.10)\n",
+            "Requirement already satisfied: langchain-text-splitters<1.0.0,>=0.3.9 in /usr/local/lib/python3.11/dist-packages (from langchain<1.0.0,>=0.3.26->langchain-community) (0.3.9)\n",
+            "Requirement already satisfied: jsonpatch<2.0,>=1.33 in /usr/local/lib/python3.11/dist-packages (from langchain-core<1.0.0,>=0.3.66->langchain-community) (1.33)\n",
+            "Requirement already satisfied: requests-toolbelt>=1.0.0 in /usr/local/lib/python3.11/dist-packages (from langsmith>=0.1.125->langchain-community) (1.0.0)\n",
+            "Requirement already satisfied: zstandard>=0.23.0 in /usr/local/lib/python3.11/dist-packages (from langsmith>=0.1.125->langchain-community) (0.23.0)\n",
+            "Requirement already satisfied: coloredlogs in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb) (15.0.1)\n",
+            "Requirement already satisfied: flatbuffers in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb) (25.2.10)\n",
+            "Requirement already satisfied: protobuf in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb) (5.29.5)\n",
+            "Requirement already satisfied: sympy in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb) (1.13.1)\n",
+            "Requirement already satisfied: importlib-metadata<8.8.0,>=6.0 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-api>=1.2.0->chromadb) (8.7.0)\n",
+            "Requirement already satisfied: googleapis-common-protos~=1.57 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb) (1.70.0)\n",
+            "Requirement already satisfied: opentelemetry-exporter-otlp-proto-common==1.36.0 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb) (1.36.0)\n",
+            "Requirement already satisfied: opentelemetry-proto==1.36.0 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb) (1.36.0)\n",
+            "Requirement already satisfied: opentelemetry-semantic-conventions==0.57b0 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-sdk>=1.2.0->chromadb) (0.57b0)\n",
+            "Requirement already satisfied: backoff>=1.10.0 in /usr/local/lib/python3.11/dist-packages (from posthog<6.0.0,>=2.4.0->chromadb) (2.2.1)\n",
+            "Requirement already satisfied: distro>=1.5.0 in /usr/local/lib/python3.11/dist-packages (from posthog<6.0.0,>=2.4.0->chromadb) (1.9.0)\n",
+            "Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.11/dist-packages (from pydantic>=1.9->chromadb) (0.7.0)\n",
+            "Requirement already satisfied: pydantic-core==2.33.2 in /usr/local/lib/python3.11/dist-packages (from pydantic>=1.9->chromadb) (2.33.2)\n",
+            "Requirement already satisfied: typing-inspection>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from pydantic>=1.9->chromadb) (0.4.1)\n",
+            "Requirement already satisfied: python-dotenv>=0.21.0 in /usr/local/lib/python3.11/dist-packages (from pydantic-settings<3.0.0,>=2.4.0->langchain-community) (1.1.1)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2->langchain-community) (3.4.2)\n",
+            "Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.11/dist-packages (from rich>=10.11.0->chromadb) (3.0.0)\n",
+            "Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.11/dist-packages (from rich>=10.11.0->chromadb) (2.19.2)\n",
+            "Requirement already satisfied: greenlet>=1 in /usr/local/lib/python3.11/dist-packages (from SQLAlchemy<3,>=1.4->langchain-community) (3.2.3)\n",
+            "Requirement already satisfied: click>=8.0.0 in /usr/local/lib/python3.11/dist-packages (from typer>=0.9.0->chromadb) (8.2.1)\n",
+            "Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.11/dist-packages (from typer>=0.9.0->chromadb) (1.5.4)\n",
+            "Requirement already satisfied: httptools>=0.6.3 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb) (0.6.4)\n",
+            "Requirement already satisfied: uvloop>=0.15.1 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb) (0.21.0)\n",
+            "Requirement already satisfied: watchfiles>=0.13 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb) (1.1.0)\n",
+            "Requirement already satisfied: websockets>=10.4 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb) (15.0.1)\n",
+            "Requirement already satisfied: cachetools<6.0,>=2.0.0 in /usr/local/lib/python3.11/dist-packages (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb) (5.5.2)\n",
+            "Requirement already satisfied: pyasn1-modules>=0.2.1 in /usr/local/lib/python3.11/dist-packages (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb) (0.4.2)\n",
+            "Requirement already satisfied: rsa<5,>=3.1.4 in /usr/local/lib/python3.11/dist-packages (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb) (4.9.1)\n",
+            "Requirement already satisfied: zipp>=3.20 in /usr/local/lib/python3.11/dist-packages (from importlib-metadata<8.8.0,>=6.0->opentelemetry-api>=1.2.0->chromadb) (3.23.0)\n",
+            "Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.11/dist-packages (from jsonpatch<2.0,>=1.33->langchain-core<1.0.0,>=0.3.66->langchain-community) (3.0.0)\n",
+            "Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.11/dist-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->chromadb) (0.1.2)\n",
+            "Requirement already satisfied: mypy-extensions>=0.3.0 in /usr/local/lib/python3.11/dist-packages (from typing-inspect<1,>=0.4.0->dataclasses-json<0.7,>=0.5.7->langchain-community) (1.1.0)\n",
+            "Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.11/dist-packages (from anyio->httpx>=0.27.0->chromadb) (1.3.1)\n",
+            "Requirement already satisfied: humanfriendly>=9.1 in /usr/local/lib/python3.11/dist-packages (from coloredlogs->onnxruntime>=1.14.1->chromadb) (10.0)\n",
+            "Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.11/dist-packages (from sympy->onnxruntime>=1.14.1->chromadb) (1.3.0)\n",
+            "Requirement already satisfied: pyasn1<0.7.0,>=0.6.1 in /usr/local/lib/python3.11/dist-packages (from pyasn1-modules>=0.2.1->google-auth>=1.0.1->kubernetes>=28.1.0->chromadb) (0.6.1)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "os.environ[\"HUGGINGFACEHUB_API_TOKEN\"] = \"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\""
+      ],
+      "metadata": {
+        "id": "sP7ZwkEhjMFo"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "HX0Qf2PkdiVC"
+      },
+      "outputs": [],
+      "source": [
+        "from langchain.document_loaders import PyPDFLoader\n",
+        "from langchain.text_splitter import RecursiveCharacterTextSplitter\n",
+        "from langchain_community.chat_models import ChatOllama\n",
+        "from langchain_huggingface import HuggingFaceEmbeddings\n",
+        "from langchain.vectorstores import Chroma\n",
+        "from langchain.chains.combine_documents.stuff import create_stuff_documents_chain\n",
+        "from langchain.chains.retrieval import create_retrieval_chain\n",
+        "from langchain_core.prompts import ChatPromptTemplate\n",
+        "import os"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "os.system(\"curl -fsSL https://ollama.com/install.sh | sh > /dev/null 2>&1\")\n",
+        "os.system(\"ollama serve &\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ONFJi-qvBMg0",
+        "outputId": "cf05e11c-9c61-4dc6-c78f-05392ed20145"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 36
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "os.system(\"ollama pull mxbai-embed-large\")\n",
+        "os.system(\"ollama pull deepseek-r1\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "DllPy0WaBPMu",
+        "outputId": "35633438-0b97-46d8-a357-8a5b6369a507"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 37
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "loader = PyPDFLoader(\"/content/pt.pdf\")\n",
+        "documents = loader.load()"
+      ],
+      "metadata": {
+        "id": "rygCkg1Sd4uu"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)\n",
+        "docs = splitter.split_documents(documents)"
+      ],
+      "metadata": {
+        "id": "rb9sPKZ0eB3B"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "embedder = HuggingFaceEmbeddings(model_name=\"sentence-transformers/all-MiniLM-L6-v2\")\n",
+        "# vectors = embedder.embed_documents([d.page_content for d in docs])"
+      ],
+      "metadata": {
+        "id": "MDMuDjpAeipn"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "db = Chroma.from_documents(docs, embedder)\n",
+        "retriever = db.as_retriever()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "V3adwVaZep5q",
+        "outputId": "add527be-3a5f-417f-9a23-165a074a0d38"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py:1750: FutureWarning: `encoder_attention_mask` is deprecated and will be removed in version 4.55.0 for `BertSdpaSelfAttention.forward`.\n",
+            "  return forward_call(*args, **kwargs)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "hf_token = os.getenv(\"HUGGINGFACEHUB_API_TOKEN\")\n"
+      ],
+      "metadata": {
+        "id": "Flz5-aBpgWLj"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model = ChatOllama(model=\"deepseek-r1\")"
+      ],
+      "metadata": {
+        "id": "LYfoO3tFCt3D"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# llm = HuggingFaceEndpoint(\n",
+        "#     endpoint_url=\"https://api-inference.huggingface.co/models/mistralai/Mixtral-8x22B-Instruct-v0.1\",\n",
+        "#     task=\"text-generation\",\n",
+        "#     huggingfacehub_api_token=hf_token,\n",
+        "#     # provider=\"hf-inference\"\n",
+        "# )"
+      ],
+      "metadata": {
+        "id": "2YUieG4TrKZZ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "system_prompt = (\n",
+        "    \"Используй ТОЛЬКО предоставленный контекст учебника по поликлинической терапии для ответа на вопрос. \"\n",
+        "    \"Если ответа нет в контексте, скажи 'Я не знаю'. \"\n",
+        "    \"Будь кратким - не более 3 предложений. \"\n",
+        "    \"Контекст: {context}\"\n",
+        ")\n",
+        "\n",
+        "prompt = ChatPromptTemplate.from_messages([\n",
+        "    (\"system\", system_prompt),\n",
+        "    (\"human\", \"{input}\"),\n",
+        "])\n",
+        "\n",
+        "combine_docs_chain = create_stuff_documents_chain(model, prompt)\n",
+        "qa_chain = create_retrieval_chain(retriever, combine_docs_chain)"
+      ],
+      "metadata": {
+        "id": "ks_Xmi5UqWDc"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# prompt = system_prompt.format(context=context, question=question)"
+      ],
+      "metadata": {
+        "id": "NyPrf36SDxOg"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "query = \"Какие есть механизмы возникновения лихорадки?\"\n",
+        "response = qa_chain.invoke({\"input\": query})\n",
+        "answer = response[\"answer\"]\n",
+        "print(answer)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "9J8lQkjXpEa8",
+        "outputId": "d74fc6b3-ba8f-4dca-e8c9-882a470434b9"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py:1750: FutureWarning: `encoder_attention_mask` is deprecated and will be removed in version 4.55.0 for `BertSdpaSelfAttention.forward`.\n",
+            "  return forward_call(*args, **kwargs)\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "<think>\n",
+            "Хм, пользователь спрашивает о механизмах возникновения лихорадки. В контексте учебника по поликлинической терапии я вижу только информацию о дозировании и способах введения какого-то лекарства (определённый препарат не указан, но упомянуты побочные эффекты), а именно: медленно сначала 4—8 мг, далее по 2 мг каждые 5-15 минут.\n",
+            "\n",
+            "Лихорадка как явление или термин вообще отсутствует в этом контексте. Возможно, пользователь перепутал вопрос о данном конкретном препарате с темой лихорадки. Или это тестирование моей способности придерживаться строгого правила использования только предоставленного контекста.\n",
+            "\n",
+            "В любом случае, в доступном тексте нет информации о механизмах лихорады. Следовательно, я должен ограничиться тем, что есть в контексте и строго соблюдать правило ответа - использовать только его содержание или сказать \"Я не знаю\".\n",
+            "\n",
+            "Пользователь мог ожидать более подробного объяснения, но я не могу превышать рамки заданного контекста. Важно чётко дать понять свою позицию и ограничения.\n",
+            "</think>\n",
+            "Я не знаю\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "query = \"Какие есть механизмы возникновения лихорадки?\"\n",
+        "response = qa_chain.invoke({\"input\": query})\n",
+        "answer = response[\"answer\"]\n",
+        "print(answer)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "NFlhP-jKpECt",
+        "outputId": "bdec8f44-bd21-44e2-cc1d-b2ba3ad7ec8b"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.11/dist-packages/torch/nn/modules/module.py:1750: FutureWarning: `encoder_attention_mask` is deprecated and will be removed in version 4.55.0 for `BertSdpaSelfAttention.forward`.\n",
+            "  return forward_call(*args, **kwargs)\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "<think>\n",
+            "Хм, пользователь спрашивает о механизмах возникновения лихорадки. В контексте учебника по поликлинической терапии от 2017 года информация именно про лечение боли — натрий пропафолом в дозировке 4-8 мг с возможностью повышения доноса через интервалы. \n",
+            "\n",
+            "Пользователь, возможно, ожидает ответа на свой вопрос о лихорадке, но я не могу найти соответствующей информации в предоставленном контексте. Мне нужно быть честным и объяснить ситуацию.\n",
+            "\n",
+            "Поскольку учебник специализированный по поликлинической терапии, он может затрагивать различные состояния, но конкретно про механизмы лихорадки не упомянуто. \n",
+            "\n",
+            "Я отвечу кратко и честно, что в данном контексте нет информации о причинах лихорады.\n",
+            "</think>\n",
+            "В предоставленном контексте учебника информация сосредоточена на применении натрий пропафола для лечения боли. Содержанием не описаны механизмы возникновения лихорадки.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "query = \"Этично ли не лечить пациента от ишемической болезни сердца, если сломался аппарат ЭКГ\"\n",
+        "answer = qa_chain.run(query)\n",
+        "print(answer)"
+      ],
+      "metadata": {
+        "id": "5DaDimYzpHdk",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 341
+        },
+        "outputId": "cc7d2965-aa26-4ee2-cc91-0bf8238f3e3a"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "AttributeError",
+          "evalue": "'RunnableSequence' object has no attribute 'run'",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mAttributeError\u001b[0m                            Traceback (most recent call last)",
+            "\u001b[0;32m/tmp/ipython-input-2169628724.py\u001b[0m in \u001b[0;36m<cell line: 0>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0mquery\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m\"Этично ли не лечить пациента от ишемической болезни сердца, если сломался аппарат ЭКГ\"\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m \u001b[0manswer\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mqa_chain\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mrun\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mquery\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      3\u001b[0m \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0manswer\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.11/dist-packages/langchain_core/runnables/base.py\u001b[0m in \u001b[0;36m__getattr__\u001b[0;34m(self, name)\u001b[0m\n\u001b[1;32m   5835\u001b[0m     \u001b[0;34m@\u001b[0m\u001b[0moverride\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   5836\u001b[0m     \u001b[0;32mdef\u001b[0m \u001b[0m__getattr__\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mname\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0mstr\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;34m->\u001b[0m \u001b[0mAny\u001b[0m\u001b[0;34m:\u001b[0m  \u001b[0;31m# type: ignore[misc]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 5837\u001b[0;31m         \u001b[0mattr\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mgetattr\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mbound\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mname\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m   5838\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m   5839\u001b[0m         if callable(attr) and (\n",
+            "\u001b[0;32m/usr/local/lib/python3.11/dist-packages/pydantic/main.py\u001b[0m in \u001b[0;36m__getattr__\u001b[0;34m(self, item)\u001b[0m\n\u001b[1;32m    989\u001b[0m                     \u001b[0;32melse\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    990\u001b[0m                         \u001b[0;31m# this is the current error\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 991\u001b[0;31m                         \u001b[0;32mraise\u001b[0m \u001b[0mAttributeError\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34mf'{type(self).__name__!r} object has no attribute {item!r}'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    992\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    993\u001b[0m         \u001b[0;32mdef\u001b[0m \u001b[0m__setattr__\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mname\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0mstr\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mvalue\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0mAny\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;34m->\u001b[0m \u001b[0;32mNone\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mAttributeError\u001b[0m: 'RunnableSequence' object has no attribute 'run'"
+          ]
+        }
+      ]
+    }
+  ]
+}
