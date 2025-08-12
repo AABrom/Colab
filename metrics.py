@@ -1,32 +1,25 @@
-from rankeval import RankEval
+import rankeval
 
-# Жёстко заданные данные
-users = [
-    [1, 0, 0, 0, 0, 1],  # user1
-    [0, 1, 0, 0, 0, 1],  # user2
-    [0, 0, 1, 0, 0, 1],  # user3
-]
-
-# Формируем qrels: релевантности для каждого пользователя и документа
+# Жёстко задаём релевантности (qrels)
 qrels = {
-    f"user{i+1}": {f"doc{j+1}": rel for j, rel in enumerate(users[i])} for i in range(len(users))
+    "user1": {"doc1": 1, "doc2": 0, "doc3": 0, "doc4": 0, "doc5": 0, "doc6": 1},
+    "user2": {"doc1": 0, "doc2": 1, "doc3": 0, "doc4": 0, "doc5": 0, "doc6": 1},
+    "user3": {"doc1": 0, "doc2": 0, "doc3": 1, "doc4": 0, "doc5": 0, "doc6": 1},
 }
 
-# Ранжирование: просто doc1..doc6 для каждого пользователя
+# Жёстко задаём run (ранжирование)
 run = {
-    f"user{i+1}": [f"doc{j+1}" for j in range(6)] for i in range(len(users))
+    "user1": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
+    "user2": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
+    "user3": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
 }
 
-# Создаём объект RankEval
-evaluator = RankEval(
-    qrels=qrels,
-    cutoff=3,            # cut-off top-k (например k=3)
-    relevance_method="binary"  # если у вас бинарные релевантности (0 или 1)
-)
+# Создаём объект метрик с cutoff=3
+metrics = rankeval.metrics.create(metrics=["map", "ndcg", "precision", "recall"], cutoff=3)
 
-# Вычисляем метрики
-results = evaluator.evaluate(run)
+# Запускаем вычисление
+results = rankeval.evaluate(qrels, run, metrics=metrics)
 
 # Выводим результаты
-for metric, score in results.items():
-    print(f"{metric}@3 = {score:.4f}")
+for metric_name, score in results.items():
+    print(f"{metric_name}@3 = {score:.4f}")
