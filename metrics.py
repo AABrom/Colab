@@ -1,24 +1,25 @@
 from pyrankeval import Rm3Evaluator
 
-# Пример: 3 пользователя (query_id), для каждого задан список результатов (с ранжированием) с релевантностью
-
+# Жёстко задаём релевантность по пользователям и докам (0/1)
+# user1: doc1 - релевантен, doc2 - нет, ..., doc6 - релевантен
 qrels = {
-    'user1': {'doc1': 1, 'doc2': 0, 'doc3': 0},
-    'user2': {'doc1': 0, 'doc2': 1, 'doc3': 0},
-    'user3': {'doc1': 0, 'doc2': 0, 'doc3': 1},
+    "user1": {"doc1": 1, "doc2": 0, "doc3": 0, "doc4": 0, "doc5": 0, "doc6": 1},
+    "user2": {"doc1": 0, "doc2": 1, "doc3": 0, "doc4": 0, "doc5": 0, "doc6": 1},
+    "user3": {"doc1": 0, "doc2": 0, "doc3": 1, "doc4": 0, "doc5": 0, "doc6": 1},
 }
 
-# Ранжированные рекомендации (doc_id и ранк)
+# Ранжирование по пользователям: просто порядок doc1..doc6 (ранг 1..6)
 run = {
-    'user1': ['doc1', 'doc2', 'doc3'],
-    'user2': ['doc2', 'doc1', 'doc3'],
-    'user3': ['doc3', 'doc1', 'doc2'],
+    "user1": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
+    "user2": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
+    "user3": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
 }
 
+# Инициализируем evaluator
 evaluator = Rm3Evaluator()
 
-results = evaluator.evaluate(qrels, run, metrics=['map', 'ndcg', 'precision'], k=3)
+# Считаем метрики с cutoff k=3
+results = evaluator.evaluate(qrels, run, metrics=["map", "ndcg", "precision", "recall"], k=3)
 
-print("Метрики ранжирования с RankEval:")
-for metric in results:
-    print(f"{metric}: {results[metric]}")
+for metric, value in results.items():
+    print(f"{metric}@3 = {value:.4f}")
