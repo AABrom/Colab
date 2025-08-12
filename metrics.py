@@ -1,19 +1,24 @@
-def map_at_3_simple() -> float:
-    users = [
-        [1, 0, 0, 0, 0, 1],
-        [0, 1, 0, 0, 0, 1],
-        [0, 0, 1, 0, 0, 1]
-    ]
+from pyrankeval import Rm3Evaluator
 
-    user_aps = []
-    for user in users:
-        rel3 = user[:3]
-        precisions = []
-        for i in range(1, 4):
-            if rel3[i-1] == 1:
-                p = sum(rel3[:i]) / i
-                precisions.append(p)
-        ap = sum(precisions) / len(precisions) if precisions else 0
-        user_aps.append(ap)
+# Пример: 3 пользователя (query_id), для каждого задан список результатов (с ранжированием) с релевантностью
 
-    return sum(user_aps) / len(users)
+qrels = {
+    'user1': {'doc1': 1, 'doc2': 0, 'doc3': 0},
+    'user2': {'doc1': 0, 'doc2': 1, 'doc3': 0},
+    'user3': {'doc1': 0, 'doc2': 0, 'doc3': 1},
+}
+
+# Ранжированные рекомендации (doc_id и ранк)
+run = {
+    'user1': ['doc1', 'doc2', 'doc3'],
+    'user2': ['doc2', 'doc1', 'doc3'],
+    'user3': ['doc3', 'doc1', 'doc2'],
+}
+
+evaluator = Rm3Evaluator()
+
+results = evaluator.evaluate(qrels, run, metrics=['map', 'ndcg', 'precision'], k=3)
+
+print("Метрики ранжирования с RankEval:")
+for metric in results:
+    print(f"{metric}: {results[metric]}")
