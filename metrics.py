@@ -1,25 +1,39 @@
-import rankeval
+import ir_measures
+from ir_measures import Qrel, Result, map, ndcg, precision, recall
 
-# Жёстко задаём релевантности (qrels)
-qrels = {
-    "user1": {"doc1": 1, "doc2": 0, "doc3": 0, "doc4": 0, "doc5": 0, "doc6": 1},
-    "user2": {"doc1": 0, "doc2": 1, "doc3": 0, "doc4": 0, "doc5": 0, "doc6": 1},
-    "user3": {"doc1": 0, "doc2": 0, "doc3": 1, "doc4": 0, "doc5": 0, "doc6": 1},
-}
+# Жёстко задаём релевантность (qrels)
+qrels = [
+    Qrel("user1", "doc1", 1), Qrel("user1", "doc2", 0), Qrel("user1", "doc3", 0),
+    Qrel("user1", "doc4", 0), Qrel("user1", "doc5", 0), Qrel("user1", "doc6", 1),
 
-# Жёстко задаём run (ранжирование)
-run = {
-    "user1": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
-    "user2": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
-    "user3": ["doc1", "doc2", "doc3", "doc4", "doc5", "doc6"],
-}
+    Qrel("user2", "doc1", 0), Qrel("user2", "doc2", 1), Qrel("user2", "doc3", 0),
+    Qrel("user2", "doc4", 0), Qrel("user2", "doc5", 0), Qrel("user2", "doc6", 1),
 
-# Создаём объект метрик с cutoff=3
-metrics = rankeval.metrics.create(metrics=["map", "ndcg", "precision", "recall"], cutoff=3)
+    Qrel("user3", "doc1", 0), Qrel("user3", "doc2", 0), Qrel("user3", "doc3", 1),
+    Qrel("user3", "doc4", 0), Qrel("user3", "doc5", 0), Qrel("user3", "doc6", 1),
+]
 
-# Запускаем вычисление
-results = rankeval.evaluate(qrels, run, metrics=metrics)
+# Жёстко задаём ранжирование рекомендаций (run) — просто doc1..doc6 в этом порядке для всех пользователей
+run = [
+    Result("user1", "doc1", rank=1, score=1.0), Result("user1", "doc2", rank=2, score=0.9),
+    Result("user1", "doc3", rank=3, score=0.8), Result("user1", "doc4", rank=4, score=0.7),
+    Result("user1", "doc5", rank=5, score=0.6), Result("user1", "doc6", rank=6, score=0.5),
+
+    Result("user2", "doc1", rank=1, score=1.0), Result("user2", "doc2", rank=2, score=0.9),
+    Result("user2", "doc3", rank=3, score=0.8), Result("user2", "doc4", rank=4, score=0.7),
+    Result("user2", "doc5", rank=5, score=0.6), Result("user2", "doc6", rank=6, score=0.5),
+
+    Result("user3", "doc1", rank=1, score=1.0), Result("user3", "doc2", rank=2, score=0.9),
+    Result("user3", "doc3", rank=3, score=0.8), Result("user3", "doc4", rank=4, score=0.7),
+    Result("user3", "doc5", rank=5, score=0.6), Result("user3", "doc6", rank=6, score=0.5),
+]
+
+# Список метрик, которые хотим посчитать на cutoff k=3
+metrics = [map@3, ndcg@3, precision@3, recall@3]
+
+# Запускаем агрегированные вычисления
+results = list(ir_measures.calc_aggregate(metrics, qrels, run))
 
 # Выводим результаты
-for metric_name, score in results.items():
-    print(f"{metric_name}@3 = {score:.4f}")
+for r in results:
+    print(f"{r.metric}@{r.k} = {r.value:.4f}")
