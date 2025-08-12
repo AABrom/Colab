@@ -1,43 +1,33 @@
-# MeanAveragePrecision@3
-def map_at_3() -> float:
-    users = [
-        [1, 0, 0, 0, 0, 1],
-        [0, 1, 0, 0, 0, 1],
-        [0, 0, 1, 0, 0, 1]
-    ]
+Ты разрабатываешь полку с персональными рекомендациями в интернет-магазине. Качество рекомендаций важно оценивать в деньгах. Имплементируй функцию, которая рассчитывает взвешенный Recall на основе рекомендаций модели и реальных покупок пользователей.
 
-    user_aps = []
-    for user in users:
-        rel3 = user[:3]
-        precs = []
-        for i in range(1, 4):
-            if rel3[i-1] == 1:
-                p = sum(rel3[:i]) / i
-                precs.append(p)
-        ap = sum(precs) / len(precs)
-        user_aps.append(ap)
+Метрика усреднена по юзерам и идентична обычному Recall, но релеватность айтема для юзера оценивает не в бинарном виде (hit / miss), а в денежном. Какую долю реально потраченных пользователями денег, в среднем умеет предсказывать модель?
+# Отранжированные рекомендации товаров, полученные из обучения алгоритма на исторических данных
 
-    return sum(user_aps) / len(users)
+top_k = 5
+n_users = 3
+reco = pd.DataFrame({
+    "user_id": np.repeat(np.arange(n_users), top_k),
+    "item_id": np.tile(np.arange(top_k), n_users),
+})
+reco["rank"] = reco.groupby("user_id").cumcount() + 1
+reco
 
+# Реальные покупки пользователей в тестовом периоде
+
+test = pd.DataFrame({
+    "user_id": [0, 1, 2, 0, 1, 2],
+    "item_id": [0, 1, 2, 3, 4, 5],
+    "money": [100, 200, 100, 200, 100, 500]
+})
+test
+
+
+Имплементируйте функцию для расчёта взвешенного Recall. Помните, что метрика сначала считается для каждого юзера, а потом усредняется для получения финального значения.
+Вспомните подходы с семинара, которые позволяют рассчитывать метрики в векторном виде.
+Корректная, но неэффективная имплементация даст 2 балла из 5.
+Корректная и эффективная - 5 из 5.
+
+def weighted_recall(reco: pd.DataFrame, test: pd.DataFrame, k: int, weight_col: str = "money") -> float:
+    # YOUR CODE HERE
     raise NotImplementedError()
-    return ans
-
-
-# MeanAveragePrecision@3
-def map_at_3() -> float:
-    users = [
-        [1, 0, 0, 0, 0, 1],
-        [0, 1, 0, 0, 0, 1],
-        [0, 0, 1, 0, 0, 1]
-    ]
-
-    user_aps = []
-    for user in users:
-        rel3 = user[:3]
-        precs = [sum(rel3[:i+1])/(i+1) for i in range(3) if rel3[i]==1]
-        ap = sum(precs) / 3 if precs else 0.0
-        user_aps.append(ap)
-    return sum(user_aps) / len(users)
-
-    raise NotImplementedError()
-    return ans
+    return res
